@@ -1,30 +1,44 @@
 #!/usr/bin/python
 import sys
-import pylab
+import matplotlib.pyplot as plt
 import numpy as np
+import time
 
 import btceapi
 
+timeout = 10
 # If an argument is provided to this script, it will be interpreted
 # as a currency pair for which depth should be displayed. Otherwise
 # the BTC/USD depth will be displayed.
+pairs = list()
 
 if len(sys.argv) >= 2:
-    pair = sys.argv[1]
-    print "Showing depth for %s" % pair
+    pairs = sys.argv[1:]
+    print "Showing depth for %s" % pairs
 else:
     print "No currency pair provided, defaulting to btc_usd"
-    pair = "btc_usd"
+    pairs = ['btc_usd']
 
-asks, bids = btceapi.getDepth(pair)
+shown = False
 
-print len(asks), len(bids)
+while(not shown):
 
-ask_prices, ask_volumes = zip(*asks)
-bid_prices, bid_volumes = zip(*bids)
+  fig = plt.figure()
+  rows = len(pairs)
+  pi = 1
+  for p in pairs:
 
-pylab.plot(ask_prices, np.cumsum(ask_volumes), 'r-')
-pylab.plot(bid_prices, np.cumsum(bid_volumes), 'g-')
-pylab.grid()
-pylab.title("%s depth" % pair)
-pylab.show()
+    asks, bids = btceapi.getDepth(p)
+
+    ask_prices, ask_volumes = zip(*asks)
+    bid_prices, bid_volumes = zip(*bids)
+
+    print len(asks), len(bids)
+    ax = fig.add_subplot(rows, 1, pi)
+    plt.title("%s depth at %s" % (p,time.strftime("%Y-%m-%d %H:%M:%S")))
+    pi = pi + 1
+    ax.plot(ask_prices, np.cumsum(ask_volumes), 'r-')
+    ax.plot(bid_prices, np.cumsum(bid_volumes), 'g-')
+    ax.grid()
+
+  plt.show(block=True)
